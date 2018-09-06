@@ -80,3 +80,19 @@ Crear un archivo _.flaskenv_ en el nivel superior y dentro de este configurar la
 	FLASK_APP = microblog.py
 
 Cualquiera de las dos formas es valida.
+
+# Parte 2
+
+### ¿Que son los templates?
+
+Los templates ayudan a mantener separados la presentación y la logica del negocio. Los templates
+se crean en archivos separados y se guardan en una carpeta llamada "templates" que está
+dentro del paquete de la aplicación:
+
+	microblog/
+		app/
+			templates/
+
+> La operación de convertir un template en una página HTML completa se llama _rendering_ (renderizar).
+Para renderizar un template se usa la función **render_template()** que viene dentro de Flask.
+
