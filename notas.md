@@ -250,7 +250,160 @@ Instalación:
 
 ### Flask-SQLAlchemy Configuration
 
--- En este unto del tutorial se va a usar SQLite.
+-- En este punto del tutorial se va a usar SQLite.
 
 *Ver config.py clase Config()*
+
+**Flask-SQLAlchemy** toma la ubicación de la base de datos de la variable **SQLALCHEMY_DATABASE_URI**
+En general es buena práctica establecer las configuraciones a partir de variables de entorno y
+proporcionar un valor de retorno cuando el entorno no define la variable. En el caso del ejemplo
+se toma la URL de la base de datos desde la variable de entorno _DATABASE_URL_, si la variable de 
+entorno no está, se configura una base de datos llama _app.db_ localizada en el directorio principal
+de la aplicación que está ubicada en la variable _basedir_.
+
+La variable **SQLALCHEMY_TRACK_MODIFICATIONS** se establece en False para deshabilitar la opción de
+Flask-SQLAlchemy de enviar una señal a la aplicación cada vez que se hacen cambios en la base de
+datos.
+
+La base de datos se va a representar con una _instancia_ de la BD, el motor de migración de la BD
+tambien tendrá una instancia. Estos objetos serán creados despues de la aplicación en el archivo:
+**app/__init__.py**.
+
+### Database Models
+
+La información que se almacenará en la BD se reprensetaran por una colección de clases, generalmente
+llamadas modelos de bases de datos. El ORM se SQLAlchemy hará las traducciones necesarias para
+asignar los objetos creados a partir de estas clases en filas y tablas.
+
+Los modelos se crean en el modulo **app/models.py**.
+
+Todos los models debe heradar de **db.Model** que es una clase base de Flask-SQLAlchemy.
+La clase **User** define los campos como variables de clase. Los campos son instancias de **db.Column**
+que toma como argumento el tipo del campo, ademas de otros argumentos opcionales.
+
+### Creating The Migration Repository
+
+**Alembic** (el framework de migración usado por Flask-Migrate) mantiene un repositorio de migración,
+en el que almacena sus scripts de migración. Cada vez que se realiza un cambio en el esquema de la
+base de datos, se agrega un script de migración al repositorio con los detalles del cambio. Para
+aplicar las migraciones, estos scripts se ejecutan en la secuencia en que fueron creados.
+
+Flask-Migrate expone sus comandos atravez del comando **flask** (como flask run). Pero para este
+caso es **flask db**, este subcomando controla todo lo relacionado con las migraciones de las
+bases de datos.
+
+> Para crear el repositorio para las migraciones:
+
+	(venv)$ flask db init
+
+### The First Database Migration
+
+Para crear una migración: **flask db migrate**
+
+	(venv) $ flask db migrate -m "users table"
+
+El comando anterior solo genera el script para crear las tablas, para aplicar las migraciones:
+
+	(venv) $ flask db upgrade
+
+### Database Upgrade and Downgrade Workflow
+
+Suponiendo que tenemos una aplicación en dos ambientes, desarrollo y producción, y que necesitamos
+crear campos o tablas nuevas, lo que debemos hacer es crear los cambios, generar el script de
+migración ($ flask db migrate), y probar los cambios en desarrollo ($ flask db upgrade), una vez
+confirmado que todo sale bien, se puede añadir el script a git y hacer un commit de este a
+producción. Luego en producción aplicar los cambios ($ flask db upgrade).
+
+Con **flask db downgrade** se pueden deshacer los ultimos cambios hechos en la BD.
+
+### Database Relationships
+
+La clase _User_ tiene un nuevo campo **post**, que es inicializado con **db.relationship**. Este no
+es un campo, sino una vista de alto nivel para las relaciones entre _users_ y _post_.
+
+Para las relaciones uno-a-muchos **db.relationship** se declara en el campo de 'uno' y es usado como
+una forma conveniente para obtener acceso a 'muchos'. El primer argumento de _db.relationship_ es la
+clase que representa el model de 'muchos'. Este argumento se puede proveer como un string con el
+nombre de la clase si el modelo esta definido más adelante en el modulo.
+
+El argumento **backref** define el nombre que se va a añadir a los objectos de 'muchos'. Esto añade una
+expresión **post.author** que retorna el nombre del usuario que escribió el post.
+
+### Play Time
+
+Para trabajar con los models hay que entrar al intrepete de Python.
+
+	>>> from app import db
+	>>> from app.models import User, Post
+
+> Para crear un nuevo usuario:
+	
+	>>> u = User(username='john', email='john@example.com')
+	>>> db.session.add(u)
+	>>> db.session.commit()  
+
+Los cambios en la BD se realizan en el contexto de una sesión, a la que se puede acceder como
+**db.session**. Se puede acumular varios cambios en una sesión y una vez que se hayan registrado
+todos los cambios se puede emitir un único commit **db.session.commit()**. Si en algún momento
+mientras trabaja en una sesión hay un error, una llamada a **db.session.rollback()** abortará la
+sesión y eliminará cualquier cambio almacenado en ella. 
+
+> Añadir otro usuario:
+
+	>>> u = User(username='susan', email='susan@example.com')
+	>>> db.session.add(u)
+	>>> db.session.commit()
+
+> La BD puede responder una consulta que retorne todos los usuarios:
+
+	>>> users = User.query.all()
+	>>> users
+	[<User john>, <User susan>]
+
+Todos los modelos tienen un atributo **query** que es el punto de entrada para hacer consultas.
+
+> Si conozco el _id_ de un usuario puedo consultarlo:
+
+	>>> u = User.query.get(1)
+
+> Creamos un post:
+
+	>>> u = User.query.get(1)
+	>>> p = Post(body='my first post!', author=u)
+	>>> db.session.add(p)
+	>>> db.session.commit()
+
+Con **db.session.delete** se pueden eliminar registros de la base de datos:
+
+	>>> users = User.query.all()
+	>>> for u in users:
+	...     db.session.delete(u)
+	...
+	>>> posts = Post.query.all()
+	>>> for p in posts:
+	...     db.session.delete(p)
+	...
+	>>> db.session.commit()
+
+### Shell Context
+
+**flask shell** parecido al Django Shell, permite configurar las herramientas que deseo tener para
+realizar pruebas y no tener que hacer los imports cada vez que trabaje con el interprete de Python.
+
+En el modulo _microblog.py_:
+
+	from app import app, db
+	from app.models import User, Post
+
+	@app.shell_context_processor
+	def make_shell_context():
+	    return {'db': db, 'User': User, 'Post': Post}
+
+	(venv) $ flask shell
+	>>> db
+	<SQLAlchemy engine=sqlite:////Users/migu7781/Documents/dev/flask/microblog2/app.db>
+	>>> User
+	<class 'app.models.User'>
+	>>> Post
+	<class 'app.models.Post'>
 
