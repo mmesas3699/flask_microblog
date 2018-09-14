@@ -1,4 +1,4 @@
-# Parte 1
+# Parte 1 (Hello, World)
 
 La mejor forma de hacer aplicaciones grandes en Flask es usandola como un paquete de Python.
 
@@ -84,7 +84,7 @@ Crear un archivo _.flaskenv_ en el nivel superior y dentro de este configurar la
 Cualquiera de las dos formas es valida.
 
 
-# Parte 2
+# Parte 2 (Templates)
 
 ### ¿Que son los templates?
 
@@ -100,7 +100,7 @@ dentro del paquete de la aplicación:
 Para renderizar un template se usa la función **render_template()** que viene dentro de Flask.
 
 
-# Parte 3
+# Parte 3 (Web Forms)
 
 ### Introducción a Flask-WTF
 
@@ -191,6 +191,7 @@ Una propiedad interesante de estos mensajes es que una vez que se solicitan trav
 **get_flashed_messages**, se eliminan de la lista de mensajes, por lo que aparecen una sola vez
 después de llamar a la función **flash()**.
 
+
 ### Improving Field Validation (Mejorando las validaciones de los campos)
 
 En el archivo **login.html** se agregan ciclos for después de los input de username y password
@@ -198,6 +199,7 @@ estos van a mostrar los mensajes de error enviados por los validadores.
 
 Por regla general cualquier campo que tenga un validador tendra atado un mensaje de error de la
 forma **form.<field name>.errors**
+
 
 ### Generating Links (Generando links)
 
@@ -213,4 +215,42 @@ usando un mapeador interno de funciones de vistas.
 
 El argumento de url_for() es el nombre del _endpoint_, que en este caso es el nombre de la función
 de vista.
+
+
+# Parte 4 (Database)
+
+### Databases in Flask
+
+El autor da un consejo acerca de cuando usar bases de datos SQL y noSQL: Dice que es mejor usar
+bases de datos SQL cuando la aplicación va a manejar datos estructurados como: listas de usuarios,
+blogs, etc., y noSQL cuando la aplicación maneja datos menos definidos.
+
+En Flask se recomienda el uso de la extención **Flask-SQLAlchemy** que proporciona un contenedor
+(wrapper) compatible con Flask del paquete **SQLAlchemy** que es un ORM (Object Relational Mapper).
+
+Los ORMs permites a las aplicaciones manejar las bases de datos usando entidades de alto nivel como
+clases, objetos y métodos, en lugar de tablas y SQL. El trabajo del ORM es traducir las operaciones
+de alto nivel en comandos de base de datos.
+
+Una ventaja de SQLAlchemy es que no es un ORM de solo una base de datos sino que funciona con varias
+bases de datos relacionales (MySQL, PostgreSQL, SQLite). 
+
+Para instalar Flask-SQLAlchemy:
+
+	(venv)$ pip install flask-sqlalchemy 
+
+### Database Migrations
+
+La extensión **Flask_Migrate** es un contenedor de Flask para **Alembic** que es un framework de
+migración de bases de datos para SQLAlchemy.
+
+Instalación:
+
+	(venv)$ pip install flask-migrate
+
+### Flask-SQLAlchemy Configuration
+
+-- En este unto del tutorial se va a usar SQLite.
+
+*Ver config.py clase Config()*
 
