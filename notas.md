@@ -407,3 +407,200 @@ En el modulo _microblog.py_:
 	>>> Post
 	<class 'app.models.Post'>
 
+
+# Parte 5 (User Logins)
+
+### Password Hashing
+
+**Werkzeug** es un paquete que se preinstala con Flask, ya que hace parte del nucle de este.
+**Werkzeug** es importante ya que este tiene una funcionlidad que nos permite cifrar las
+contraseñas.
+
+Ejemplo:
+
+	>>> from werkzeug.security import generate_password_hash
+	>>> hash = generate_password_hash('foobar')
+	>>> hash
+	'pbkdf2:sha256:50000$vT9fkZM8$04dfa35c6476acf7e788a1b5b3c35e217c78dc04539d295f011f01f18cd2175f'
+
+En el ejemplo, la contraseña 'foobar' se transformó en un string codificado a través de una serie
+de operaciones criptográficas que NO tienen una operiación inversa conocida, lo que significa que 
+una persona que obtiene la contraseña hash no podrá usarla para obtener la contraseña original.
+
+Como medida adicional, si se ha cifrado la misma contraseña varias veces, se obtendrán diferentes
+resultados, por lo que es imposible identificar si dos usuarios tiene la misma contraseña solo con
+observar sus valores hash.
+
+El proceso de verificación se realiza con otra función:
+
+	>>> from werkzeug.security import check_password_hash
+	>>> check_password_hash(hash, 'foobar')
+	True
+	>>> check_password_hash(hash, 'barfoo')
+	False
+
+Todo el proceso de cifrado de contraseñas se puede implemetar con solo dos funciones. Ver
+_models.py_ clase _User_.
+
+Practica:
+
+	>>> u = User(username='susan', email='susan@example.com')
+	>>> u.set_password('mypassword')
+	>>> u.check_password('anotherpassword')
+	False
+	>>> u.check_password('mypassword')
+	True
+
+### Introduction to Flask-Login
+
+La extensión **Flask-Login** controla el estado de inicio de sesión del usurio, de modo que, por
+ejemplo los usuarios puede iniciar sesión en la aplicación y luego navegar a diferentes páginas
+mientras la aplicación 'recuerda' que el usuario ha iniciado sesión. También proporciona la 
+funcionalidad 'recordarme' que permite a los usuarios permanecer conectados incluso después de cerrar
+la ventana del navegador.
+
+	(venv) $ pip install flask-login
+
+Como otras extensiones Flask-Login necesita ser creado he inicializado despues de la instancia de
+la aplicación, en '\___init__.py'. 
+
+### Preparing The User Model for Flask-Login
+
+La extensión Flask-Login trabaja con el model definido en la aplicación **User** y espera que este
+implemente ciertas propiedades y métodos. Este enfoque es agradable,ya que mientras estos elementos
+necesarios se agreguen al modelo, Flask-Login no tiene ningún otro requisito, por lo que puede 
+funcionar con modelos de usuarios basados en cualquier sistema de bases de datos.
+
+Los items requeridos son:
+
+1. **is_authenticated**, una propiedad que es _True_ si el usuarios tiene credenciales validas, en 
+caso contrario _Flase_.
+
+2. **is_active**, una propiedad que es _True_ si la cuenta del usuario esta activa, _False_ en 
+caso contrario.
+
+3. **is_anonymous**, una propiedad que es False para usuarios normales y True para un usuario
+anónimo especial.
+
+4. **get_id ()**, un método que devuelve un identificador único para el usuario como una cadena
+(unicode, si usa Python 2).
+
+Ya que estas implementaciones son genericas Flask-Login provee una clase _mixin_ que implementa los
+4 items de forma rapida y que es compatible con la mayoria de modelos _User_. La clase **UserMixin**.
+
+	from flask_login import UserMixin
+	
+	class User(UserMixin, db.Model):
+	    ...
+
+### User Loader Function
+
+Flask-Login realiza un seguimiento del usuario que ha iniciado sesión almacenando su identificador
+único en la sesión de usuario de Flask, un espacio de almacenamiento asignado a cada usurio que se
+conecta a la aplicación. Cada vez que el usuario conectado navega a una página nueva, Flask-Login
+recupera el ID del usuario de la sesión y luego lo carga en la memoria.
+
+Como Flask-Login no sabe nada acerca de las bases de datos, necesita la ayuda de la aplicación para
+cargar un usuario, la extensión espera que la aplicación configure una función de carga de usuarios,
+que se puede llamar para cargar un usuario dado el ID.
+
+> En app/models.py
+
+	from app import login
+	# ...
+
+	@login.user_loader
+	def load_user(id):
+    	return User.query.get(int(id))
+
+La función que carga el usuario está registrado con Flask-Login con el decorador **@login.user_loader**.
+El _id_ que la extensión pasa a la función como argumento va a ser un string, por lo que las BD que usan
+datos numéricos necesitan convertir la cadena en un integer.
+
+### Logging Users In
+
+Ver la función _login_ en _routes.py_.
+
+La variable **current_user** proviene de Flask-Login y puede usarse en cualquier momento durante el
+manejo para obtener el objeto de usuario que representa al cliente en el request.
+
+### Logging Users Out
+
+Para cerrar la sesión de los usuarios se puede usar la función de Flask-Login **logout_user()**.
+Ver: 'app/routes.py'.
+
+Para exponer los links de login y logout a los usuarios ver: _app/templates/base.html_.
+
+La propiedad **is_anonymous** es un atributo que Flask-Login agrega a los objetos User a través de
+la clase _UserMixin_. La expresión **current_user.is_anonymous** va a ser **True** solo cuando el
+usuario no haya iniciado sesión.
+
+### Requiring Users To Login (Exigir a los usuarios que inicien sesión)
+
+Flask-Login proporciona una función que redirecciona a la página de inicio de sesión a los usuarios
+que no esten logueados y que intenten ver una página protejida.
+
+Para que este función sea implementada Flask-Login necesita saber cual es la vista que controla los
+logins, esto se puede implementar en el archivo **app/__init__.py**.
+
+	#
+	login = LoginManager(app)
+	login.login_view = 'login'
+
+El valor _'login'_ es el nombre de la función de vista (o endpoint) que se usa en __url_for()__ para
+obtener las URL.
+
+La forma en que Flask-Login protege las vistas es con el decorador **@login_required**. Este debe estar
+ubicado debajo del decorador de Flask **app.route()**, y con esto la vista quedará protegida contra
+usuarios que no estén autenticados.
+
+Ejemplo:
+
+	from flask_login import login_required
+
+	@app.route('/')
+	@app.route('/index')
+	@login_required
+	def index():
+		# ...
+
+ejemplo de la implementación de **next**:
+
+	from flask import request
+	from werkzeug.urls import url_parse
+
+	@app.route('/login', methods=['GET', 'POST'])
+	def login():
+	    # ...
+	    if form.validate_on_submit():
+	        user = User.query.filter_by(username=form.username.data).first()
+	        if user is None or not user.check_password(form.password.data):
+	            flash('Invalid username or password')
+	            return redirect(url_for('login'))
+	        login_user(user, remember=form.remember_me.data)
+	        next_page = request.args.get('next')
+	        if not next_page or url_parse(next_page).netloc != '':
+	            next_page = url_for('index')
+	        return redirect(next_page)
+	    # ...
+
+### Showing The Logged In User in Templates (Mostrando el usuario registrado en los templates)
+
+Para ver la información de los usuarios logueados en los templates usar **current_user** de 
+Flask-Login. Ver _app/templates/index.html_
+
+> CREAR USUARIOS DESDE LA CONSOLA
+	
+	>>> u = User(username='susan', email='susan@example.com')
+	>>> u.set_password('cat')
+	>>> db.session.add(u)
+	>>> db.session.commit()
+
+### User Registration
+
+_app/forms.py_ Clase: **RegistrationForm**.
+
+Cuando se añade nvalidadores a los formularios y estos se nombran de la forma **validate_<field-name>**
+WTFForms toma estos validadores y los añade a los que trae por defecto.
+
+Para ver el formulario de registro: app/templates/register.html, app.routes.register, app.forms.RegisterForm
