@@ -604,3 +604,92 @@ Cuando se añade nvalidadores a los formularios y estos se nombran de la forma *
 WTFForms toma estos validadores y los añade a los que trae por defecto.
 
 Para ver el formulario de registro: app/templates/register.html, app.routes.register, app.forms.RegisterForm
+
+
+# Parte 6 (Profile Page and Avatars)
+
+### User Profile Page
+
+Para crear una página de perfil creamos una vista que mapee con la URL _/user/<username>_. (user)
+
+Ver el template: _app/templates/user.html_
+
+> Para resaltar que en el template _base.html_, en la creación del link para los perfiles de los
+usuarios en la función **url_for()**, se para como paramentro _username_ que tiene el mismo nombre
+que se usa en la definición de la vista 'user'. 
+
+	<a href="{{ url_for('user', username=current_user.username) }}">Profile</a>
+
+### Avatars
+---
+
+### Using Jinja2 Sub-Templates ( {% include '' %} )
+
+Los **sub-templates** se usan con _include_ de Jinja2. 
+
+> Una conveción que puede ser util es nombrar a estos sub-templates con _\__template.html_\
+
+Ver: \__post.html y user.html
+
+### More Interesting Profiles
+
+Un problema con la página actual es que el perfil no muestra mucha información acerca de los usuarios.
+
+Para añadir información adicional (acerca de y ultima visita), es necesario extender el model User.
+Ver: app.models.User
+
+**Recuerde que cada vez que la base de datos es modificada es necesario realizar una migración**
+
+Ver: app/templates/user, para ver la información añadida.
+
+### Recording The Last Visit Time For a Use
+
+Que se ejecuten ciertos procesos antes de enviar un request a una vista solicitada es una tarea
+común en las aplicaciones web y Flask lo provee por defecto:
+
+	from datetime import datetime
+
+	@app.before_request
+	def before_request():
+	    if current_user.is_authenticated:
+	        current_user.last_seen = datetime.utcnow()
+	        db.session.commit()
+
+El decorador **@before_request** registra la función decorada (before_request()), para que
+sea ejecutada antes de las vistas.
+
+Lo anterior es útil porque ahora puede ejecutar el código que desee antes de que se ejecuten las
+vistas.
+
+> Se da un concejo y es que las aplicaciones web deben trabajar con unidades de tiempo consistentes
+y por eso de debe usar UTC, en lugar de la hora local ya que lo que se guarde en la base de datos 
+dependerá de la ubicación del usuario.
+
+El porque no hya un **db.session.add()** antes del commit(), es poque cuando se hace referncia a
+current_user, Flask-Login invoca la función (callback) para cargar el usuario (user loader callback)
+que ejecuta una consulta a la BD y que colocará al usuario de destino en la sesión de la base de
+datos. Asi que si lo desea puede usar db.session.add() pero no es necesario.
+
+### Profile Editor
+
+Se va a dar a los usuarios un formulario en el que puedan ingresar información sobre ellos mismos y
+tambien les permitira cambiar su nombre de usuario.
+
+Para lo anterios se va a crear un formulario que almacenará la informacion sobre ellos en el campo
+*about_me* que se creó en el modelo User.
+
+Ver: app/forms.py
+
+	from wtforms import StringField, TextAreaField, SubmitField
+	from wtforms.validators import DataRequired, Length
+
+	# ...
+
+	class EditProfileForm(FlaskForm):
+	    username = StringField('Username', validators=[DataRequired()])
+	    about_me = TextAreaField('About me', validators=[Length(min=0, max=140)])
+	    submit = SubmitField('Submit')
+
+El template que almacenará este formulario es: app/templates/edit_profile.html
+
+La vista para manejar este formulario es: app.routes.edit_profile
