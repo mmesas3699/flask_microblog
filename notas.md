@@ -693,3 +693,183 @@ Ver: app/forms.py
 El template que almacenará este formulario es: app/templates/edit_profile.html
 
 La vista para manejar este formulario es: app.routes.edit_profile
+
+
+# Parte 7 Error Handling (Manejo de Errores)
+
+¿Que ocurre cuando hay un erro en una aplicación de Flask?.
+
+### Debug Mode
+
+Para mantener el servidor protejido el modo DEBUG de Flask se debe ejecutar solo en un ambiente
+de desarrollo.
+
+Para activar el modo 'debug':
+
+	(venv)$ export FLASK_DEBUG=1
+
+### Custom Error Pages
+
+Flask provee una forma de crear nuestars propias páginas de errores.
+
+En este caso se van a definir páginas de errores para los HTTP 404 y 500.
+
+Para crear un controlador de errores propio se usa el decorador: **@errohandler**. En este caso
+se van a poner los controladores de errores en el modulo: **app/errors.py**
+
+Para registrar los controladores de errores, se debe importar el modulo *errors.py*, despues de
+la creación de la instancia de la aplicación.
+
+	app/__init__.py: Import error handlers
+
+	# ...
+
+	from app import routes, models, errors
+
+### Sending Errors by Email
+
+El otro problema con el manejo de errors predeterminado de Flask es que no tiene notificaciones, el
+seguimiento de la pila para los errores se imprime en la terminal, lo obliga a monitorear la salida
+del proceso del servidor para descubiri errores. Cuando se ejecuta la aplicación en ambiente de
+desarrollo no hay ningín problema, pero en un servidor de producción, nadie va a revisar la terminal,
+por lo que se debe implementar una solución más solida.
+
+**Es muy importante tomar un posición proactiva con respecto a los errores.**
+
+si ocurre un error en la versión de producción de la aplicación, es necesario saberlo de inmediato.
+Por lo tanto se va a configurar Flask para que envíe un correo inmediatamente deśpués de un error, 
+y en el cuerpo del correo estara la pila de errores.
+
+El primer paso es agregar los detalles del servidor de correo electrónico al archivo de
+configuración:
+
+Ver config.py:
+
+	class Config(object):
+    	# ...
+	    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+	    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 25)
+	    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None
+	    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+	    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+	    ADMINS = ['your-email@example.com']
+
+La opción **ADMINS** almacena en una lista las direcciones a las cuales se les enviaran los logs.
+
+Flask usa el paquete Python **logging** para escribir sus logs, y este paquete tiene la posibilidad
+de enviar sus logs por email.
+
+Todo lo que se necesita para recibir correos enviados sobre errores es agregar una instancia de
+**SMTPHandler** al objeto logger Flask, que es app.logger:
+
+Ver: app/__init.py__
+
+	import logging
+	from logging.handlers import SMTPHandler
+
+	# ...
+
+	if not app.debug:
+	    if app.config['MAIL_SERVER']:
+	        auth = None
+	        if app.config['MAIL_USERNAME'] or app.config['MAIL_PASSWORD']:
+	            auth = (app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+	        secure = None
+	        if app.config['MAIL_USE_TLS']:
+	            secure = ()
+	        mail_handler = SMTPHandler(
+	            mailhost=(app.config['MAIL_SERVER'], app.config['MAIL_PORT']),
+	            fromaddr='no-reply@' + app.config['MAIL_SERVER'],
+	            toaddrs=app.config['ADMINS'], subject='Microblog Failure',
+	            credentials=auth, secure=secure)
+	        mail_handler.setLevel(logging.ERROR)
+	        app.logger.addHandler(mail_handler)
+
+Para probar esta configuración hay que usar una cuenta de Google.
+
+	export MAIL_SERVER=smtp.googlemail.com
+	export MAIL_PORT=587
+	export MAIL_USE_TLS=1
+	export MAIL_USERNAME=<your-gmail-username>
+	export MAIL_PASSWORD=<your-gmail-password>
+
+### Logging to a File
+
+Recibir errores por mail es bueno, pero aveces no es suficiente. Hay algunas condiciones de falla
+que no terminan en una excepción de Python y no son un problema importante, pero aún pueden ser lo
+suficientemente interesantes como para guardarlas con fines de depuración.
+
+Para habilitar un log basado en archivos, otro manejador, esta vez de tipo **RotatingFileHandler**,
+este debe estar conectado al registro de aplicaciones, de forma similar al controlador de email.
+
+Ver: app/__init__.py
+
+	# ...
+	from logging.handlers import RotatingFileHandler
+	import os
+
+	# ...
+
+	if not app.debug:
+	    # ...
+
+	    if not os.path.exists('logs'):
+	        os.mkdir('logs')
+	    file_handler = RotatingFileHandler('logs/microblog.log', maxBytes=10240,
+	                                       backupCount=10)
+	    file_handler.setFormatter(logging.Formatter(
+	        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+	    file_handler.setLevel(logging.INFO)
+	    app.logger.addHandler(file_handler)
+
+	    app.logger.setLevel(logging.INFO)
+	    app.logger.info('Microblog startup')
+
+
+Se va a escribir el archivo de registro con el nombre de 'microblog.log' es un directorio de logs,
+el cual se crea se no existe.
+
+La clase **RotatingFileHandler** es muy útil porque rota los registros, lo que garantiza que los
+archivos de registro no crezcan demasiado cuando la aplicación se ejecuta durante mucho tiempo. En
+este caso se esta limitando el tamaño del archivo de registro a 10KB, y se guardan los últimos 10 logs
+como copia de seguridad.
+
+La clase **logging.Formatter** proporciona un formato personalizaod para los mensajes de registro. Como
+estos mensje van a un archivo, se quiere que tengan tanta información como sea posible. Asi que se
+usa un formato que incluye la marca de tiempo (timestamp), el nivel de registro, el mensaje, el
+archivo fuente y el número de línea desde donde se originó la entrada del registro. También se baja
+el nivel de registro a la categoria INFO, tanto en el registrador de aplicaciones como en el manejador
+de registro de archivos.
+
+> Importante: Las categorias de registro son: DEBUG, INFO, WARNING, ERROR, CRITICAL, en orden creciente
+de severidad. Como primer uso interesante del archvio de log, el servidor escribe una línea en los
+registros cada vez que se inicia. Cuando esta aplicación se ejecuta en un servidor de producción,
+estas entradas de registro le indicarán cuándo se reinició el servidor.
+
+### Fixing the Duplicate Username Bug
+
+Ver: app.forms.EditProfileForm:
+
+	class EditProfileForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    about_me = TextAreaField('About me', validators=[Length(min=0, max=140)])
+    submit = SubmitField('Submit')
+
+    def __init__(self, original_username, *args, **kwargs):
+        super(EditProfileForm, self).__init__(*args, **kwargs)
+        self.original_username = original_username
+
+    def validate_username(self, username):
+        if username.data != self.original_username:
+            user = User.query.filter_by(username=self.username.data).first()
+            if user is not None:
+                raise ValidationError('Please use a different username.')
+
+Ver: app.routes.edit_profile
+
+	@app.route('/edit_profile', methods=['GET', 'POST'])
+	@login_required
+	def edit_profile():
+    	form = EditProfileForm(current_user.username)
+    	# ...
+
