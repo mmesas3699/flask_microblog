@@ -873,3 +873,22 @@ Ver: app.routes.edit_profile
     	form = EditProfileForm(current_user.username)
     	# ...
 
+
+# Parte 8 (Followers)
+
+### Database Relationships Revisited
+
+En este capítulo se va a trabajar mas con la base de datos de la aplicación. Se requiere que los
+usuarios de la aplicación puedan elegir facilmente a que otros usuarios quieren seguir.
+
+Se ha dicho que se quiere crear una lista de usuarios seguidos y no seguidos, pero las bases de
+datos relacionales no tienen un tipo de dato 'lista' que se pueda usar para este caso. Todo lo
+que hay dentro de las bases de datos son tablas con registros y relaciones entre los registros.
+
+La base de datos en este momento tiene un¿a tabla que representa los Usuarios, por lo tanto solo
+queda crear la relación correcta que represente el la relación de follow/followed.
+
+### One-To-Many
+
+![One-ToMany](ch04-users-posts.png)
+

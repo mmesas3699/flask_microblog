@@ -1,6 +1,5 @@
 import logging
 import os
-
 from logging.handlers import SMTPHandler
 from logging.handlers import RotatingFileHandler
 
