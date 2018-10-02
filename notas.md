@@ -885,10 +885,245 @@ Se ha dicho que se quiere crear una lista de usuarios seguidos y no seguidos, pe
 datos relacionales no tienen un tipo de dato 'lista' que se pueda usar para este caso. Todo lo
 que hay dentro de las bases de datos son tablas con registros y relaciones entre los registros.
 
-La base de datos en este momento tiene un¿a tabla que representa los Usuarios, por lo tanto solo
-queda crear la relación correcta que represente el la relación de follow/followed.
+La base de datos en este momento tiene una tabla que representa los Usuarios, por lo tanto solo
+queda crear la relación correcta que represente la relación de follow/followed.
 
 ### One-To-Many
 
-![One-ToMany](ch04-users-posts.png)
+![One-ToMany](./adjuntos_notas/ch04-users-posts.png)
+
+Las dos entidades en esta relación son 'usuarios' y 'posts'. Se djo que un usuario podria tener
+muchos posts y un post solo un usuario. La relación es representada en la base de datos con
+una llave foranea en el lado de 'many' (muchos). En esta relación la llave foramena es el campo
+**user_id** de la tabla Posts, y este camop representa el vinculo entre el post y el usuario 
+en la tabla User.
+
+Está bastante claro que el campo **user_id** provee una relación directa con su autor, pero y que
+hay de la dirección inversa. Para quela relación sea útil, se debería poder obtener la lista de
+post escritos por un usuario. El campo user_id en la tabla de Posts es suficiente para responder
+esta inquietud, ya que las bases de datos tiene índices que permiten consultas eficientes como:
+"recuperar todas las publicaciones que tienen un user_id X".
+
+### Many-To-Many
+
+Las relaciones de muchos a muchos son un poco más complejas. 
+Ejemplo: Considere una base de datos que tenga estudiantes y profesores. Se puede decir que un alumno
+tiene muchos profesores y un maestro tiene muchos alumnos. Es como dos relaciones superpuestas de uno
+a muchos desde ambos extremos.
+
+Para una relación de este tipo, debería poder consultar la BD y obtener la lista de docentes que
+enseñan a un alumno determinado y la lista de alumnos de una clase de docente. Para poder representar
+esto en una BD relacional, se requiere el uso de una tabla auxiliar llamada tabla de asociación. Ya
+que no se puede hacer agregando llaves foraneas a las tablas existentes.
+
+![Many-To-Many](./adjuntos_notas/ch08-students-teachers.png)
+
+### Many-to-One and One-to-One
+
+La relación muchos-a-uno es igual a uno-a-muchos la unica diferencia es que la relación es vista
+desde el lado de muchos.
+
+Una relación uno-a-uno es un caso especial de uno-a-muchos. La representación es similar, pero se
+agrega un constrain (restricción) a la BD para evitar que el lado 'muchos ' tenga más de un enlace.
+Si bien hay casos en los que este tipo de relación es útil, no es tan común como lo otros tipos.
+
+### Representing Followers (Representando seguidores)
+
+Se va a usar la representación Many-To-Many porque un usuario puede seguir muchos usuarios y un
+usuario puede tener muchos seguidores. Pero con una variación, en el ejemplo de los profesores y 
+estudiantes habian dos entidades, maestros y alumnos. Pero en el caso de los seguidores hay usuarios
+siguiendo usuarios, asi que solo tengo la entidad usuarios.
+
+Una relación ne la que las instancias de una clase están vinculadas a otras de la misma clase de llama
+relación autorreferencial (self-referential relationship).
+
+Aquí hay un diagrama de la relación autorreferencial de muchos a muchos que hace un seguimiento de
+los seguidores:
+
+![self-referential relationship](./adjuntos_notas/ch08-followers-schema.png)
+
+### Database Model Representation
+
+Para añadir seguidores a la base de datos. Primero aquí esta la tabla asociativa **followers**.
+
+Ver: app/models.py
+
+	followers = db.Table('followers',
+	    db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
+	    db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
+	)
+
+Esto es una traducción directa de la tabla asociativa del diagrama anterior. Note que no se
+declara la tabla como un modelo, asi como se hizo con las tablas User y Post. Ya que esto es una
+tabla auxiliar y no va a contener datos más allá de las llaves foraneas, se crea sin la
+herencia de la clase db.Model.
+
+Para crear la relación Many-To-Many en la tabla User:
+
+	class User(UserMixin, db.Model):
+    # ...
+    followed = db.relationship(
+        'User', secondary=followers,
+        primaryjoin=(followers.c.follower_id == id),
+        secondaryjoin=(followers.c.followed_id == id),
+        backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
+
+
+Se usa la función **db.relationship** para definir la relación en la clase Model. Esta relación
+vincula las instancias de User con otras instancias de User, por conveción, digamos que para un
+par de usuarios vinculados por esta relación, el usuario del lado izquierdo está siguiendo (followed)
+al usuario del lado derecho. Se define la relación como se ve desde el lado izquierdo con el nombre
+_followed_, porque cuando se ahga una consulta desde el lado izquierdo se obtendra una lista de
+usuarios seguidos (es decir los del lado derecho).
+
+Revisando los argumentos de la función **db.relationship**:
+
+- 'User' es la entidad del lado derecho de la relación (la entidad del lado izquierdo es la clase
+principal). Como esta es una relación autorreferencial, tengo que usar la misma clase en ambos lados.
+
+- _secondary_ configura la tabla de asociación que se usa para esta relación, que definí justo arriba
+de esta clase.
+
+- _primaryjoin_ indica la condición que vincula la entidad del lado izquierdo (el usuario seguidor)
+con la tabla de asociación. La condición de unión (join) para el lado izquierdo es el ID de usuario que
+coincide con la columna **follower_id** de la labla de asociación. La expresión *followers.c.follower_id*
+hace referencia a la columna *follower_id* de la tabla de asociación.
+
+- _secondjoin_ indica la condición que vincula la entidad del lado derecho (el usuario seguido) con
+la tabla de asociación. Es similar a la de _primaryjoin_ pero con la diferencia de que ahora se usa
+*followed_id*, que es la otra llave foranea en la tabla de asociación.
+
+- _backref_ define cómo se accederá a esta relación desde la entidad del lado derecho. Desde el lado
+izquierdo, la relazión se nombra *followed*, pero desde el lado derecho se va a usar *followers*
+para representar a todos los usuarios del lado izquierdo que están vinculados al usuario objetivo
+en el lado derecho. El argumento _lazy_ adicional indica el modo de ejecución para la consulta. El 
+modo dinámico configura la consulta para que no se ejecute hasta que se solicite específicamente.
+
+- _lazy_ es similar al parámetro del mismo nombre en _backref_, pero este se aplica a la consulta del
+lado izquierdo en lugar del lado derecho.
+
+> Recuerde: siempre que se hagan cambios en los modelos hay que hacer las migraciones.
+
+	(venv) $ flask db migrate -m "followers"
+	(venv) $ flask db upgrade
+
+### Adding and Removing "follows"
+
+Gracias al ORM de SQLAlchemy, un usuario que sigue a otro puede ser registrado en la BD utilizando
+la relación _followed_ como si fuera una lista. Por ejemplo:
+
+	user1.followed.append(user2)
+
+Y para dejar de seguirlo:
+
+	user1.followed.remove(user2)
+
+A pesar de que agregar y elimnar seguidores es bastante fácil, se quiere (siempre) promover la
+reutilización del código, por eso no se va a esparcir 'agregar' y 'eliminar' a través del código.
+en su lugar se van a crear la funciones: "follow" "unfollow" como métodos del model User.
+
+> Siempre es mejor alejar la lógica de la aplicación de las funciones de vista y pasarla a los modelos
+u otras clases o módulos auxiliares, ya que esto hace que realizar 'unit testing' sea más sencillo.
+
+Cambios en el modelo User:
+
+	class User(UserMixin, db.Model):
+	    #...
+
+	    def follow(self, user):
+	        if not self.is_following(user):
+	            self.followed.append(user)
+
+	    def unfollow(self, user):
+	        if self.is_following(user):
+	            self.followed.remove(user)
+
+	    def is_following(self, user):
+	        return self.followed.filter(
+	            followers.c.followed_id == user.id).count() > 0
+
+### Obtaining the Posts from Followed Users
+
+En la página de indice de la aplicación, voy a mostrar las publicaciones de blog escritas por
+todas las personas seguidas por el usuario que inició sesión.
+
+Para obtener los posts es necesario hacer una consulta a la base de datos, pero cual es la mejor
+forma de hacerlo.
+
+Se puede hacer un query que traiga un listado de todos los usuarios seguidos y con esta lista
+hacer otro que traiga y una los posts por cada usuario en la lista, admeas de tener que ordenarlos.
+Esto es ineficiente, ya que si el usuario sigue a otros mil, voy a manejar toda esta información en
+memoria y es un uso bastante ineficiente.
+
+Realmente no hay manera de evitar esta fusión y clasificación de las publicaciones del blog,
+pero hacerlo en la aplicación resulta en un proceso muy ineficiente. **Este tipo de trabajo es en
+el que sobresalen las bases de datos relacionales**.
+
+Las BD que tiene inidces que les permiten realizar las consultas y la clasificación de una manera
+mucho más eficiente que hacerlo desde la aplicación.
+
+	class User(db.Model):
+	    #...
+	    def followed_posts(self):
+	        return Post.query.join(
+	            followers, (followers.c.followed_id == Post.user_id)).filter(
+	                followers.c.follower_id == self.id).order_by(
+	                    Post.timestamp.desc())
+
+Dentro de la consulta hay tres secciones principales: join(), filter(), order_by(), que son métodos
+del objeto _query_ de SQLAlchemy.
+
+### Unit Testing the User Model
+
+Cada vez que se crean caracteristicas algo complejas, es recomendable realizar pruebas unitarias.
+
+Python incluye el paquete **unittest** el cual facilita la escritura y ejecución de pruebas unitarias.
+Estas pruebas irán en el modulo _tests.py_.
+
+Para ejecutar las pruebas:
+
+	(venv)$ python tests.py
+
+Los métodos **setUp()** y **tearDown()** son métodos especiasles que se ejecutan antes y despues de
+cada prueba respectivamente. Se implmenteo un hack en setUp(), para evitar que las pruebas utilicen
+la BD reular usada en desarrollo. La cambiar la configuración a sqllite:// se obtiene que SQLAlchemy
+use una base de datos SQLite en memoria durante las pruebas. La llamada a *db.create_all()* crea
+todas las tablas de la base de datos. Es una forma útil y rápida para crear una base de datos desde
+cero muy útil para pruebas más no para desarrollo o producción, en estos casos usar las migraciones.
+
+### Integrating Followers with the Application
+
+Se añaden dos neuvas rutas para 'follow' y 'unollow':
+
+	@app.route('/follow/<username>')
+	@login_required
+	def follow(username):
+	    user = User.query.filter_by(username=username).first()
+	    if user is None:
+	        flash('User {} not found.'.format(username))
+	        return redirect(url_for('index'))
+	    if user == current_user:
+	        flash('You cannot follow yourself!')
+	        return redirect(url_for('user', username=username))
+	    current_user.follow(user)
+	    db.session.commit()
+	    flash('You are following {}!'.format(username))
+	    return redirect(url_for('user', username=username))
+
+	@app.route('/unfollow/<username>')
+	@login_required
+	def unfollow(username):
+	    user = User.query.filter_by(username=username).first()
+	    if user is None:
+	        flash('User {} not found.'.format(username))
+	        return redirect(url_for('index'))
+	    if user == current_user:
+	        flash('You cannot unfollow yourself!')
+	        return redirect(url_for('user', username=username))
+	    current_user.unfollow(user)
+	    db.session.commit()
+	    flash('You are not following {}.'.format(username))
+	    return redirect(url_for('user', username=username))
+
+Modificando: app/templates/user.html
 
