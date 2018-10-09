@@ -1,0 +1,80 @@
+2018-10-02 10:30:30,203 ERROR: Exception on /register [POST] [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py:1761]
+Traceback (most recent call last):
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1193, in _execute_context
+    context)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/default.py", line 509, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: user
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 2292, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1815, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1718, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/_compat.py", line 35, in reraise
+    raise value
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/routes.py", line 77, in register
+    if form.validate_on_submit():
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask_wtf/form.py", line 101, in validate_on_submit
+    return self.is_submitted() and self.validate()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/wtforms/form.py", line 310, in validate
+    return super(Form, self).validate(extra)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/wtforms/form.py", line 152, in validate
+    if not field.validate(self, extra):
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/wtforms/fields/core.py", line 206, in validate
+    stop_validation = self._run_validation_chain(form, chain)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/wtforms/fields/core.py", line 226, in _run_validation_chain
+    validator(form, self)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/forms.py", line 36, in validate_username
+    user = User.query.filter_by(username=username.data).first()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/orm/query.py", line 2888, in first
+    ret = list(self[0:1])
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/orm/query.py", line 2680, in __getitem__
+    return list(res)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/orm/query.py", line 2988, in __iter__
+    return self._execute_and_instances(context)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/orm/query.py", line 3011, in _execute_and_instances
+    result = conn.execute(querycontext.statement, self._params)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 948, in execute
+    return meth(self, multiparams, params)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/sql/elements.py", line 269, in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1060, in _execute_clauseelement
+    compiled_sql, distilled_params
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1200, in _execute_context
+    context)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1413, in _handle_dbapi_exception
+    exc_info
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/util/compat.py", line 265, in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/util/compat.py", line 248, in reraise
+    raise value.with_traceback(tb)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1193, in _execute_context
+    context)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/default.py", line 509, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: user [SQL: 'SELECT user.id AS user_id, user.username AS user_username, user.email AS user_email, user.password_hash AS user_password_hash, user.about_me AS user_about_me, user.last_seen AS user_last_seen \nFROM user \nWHERE user.username = ?\n LIMIT ? OFFSET ?'] [parameters: ('mmesas', 1, 0)] (Background on this error at: http://sqlalche.me/e/e3q8)
+2018-10-02 10:31:57,929 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 10:32:24,477 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 10:32:33,382 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 10:32:43,236 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 14:39:42,694 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 14:40:14,642 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 14:40:31,124 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 14:43:05,676 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 14:44:04,089 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 14:44:44,216 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 14:47:46,799 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 14:48:12,195 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 15:22:04,059 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-02 15:25:59,943 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-03 09:08:49,194 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-03 09:32:49,560 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]

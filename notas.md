@@ -1127,3 +1127,241 @@ Se añaden dos neuvas rutas para 'follow' y 'unollow':
 
 Modificando: app/templates/user.html
 
+
+# Parte 9 (Pagination)
+
+### Submission of Blog Posts
+
+El home page necesita tener un formulario para que los usuarios puedan escribir nuevos posts.
+
+Ver: app/forms.py
+
+	class PostForm(FlaskForm):
+	    post = TextAreaField('Say something', validators=[
+	        DataRequired(), Length(min=1, max=140)])
+	    submit = SubmitField('Submit')
+
+Despues añadir este formulario a index.html.
+
+	{% extends "base.html" %}
+
+	{% block content %}
+	    <h1>Hi, {{ current_user.username }}!</h1>
+	    <form action="" method="post">
+	        {{ form.hidden_tag() }}
+	        <p>
+	            {{ form.post.label }}<br>
+	            {{ form.post(cols=32, rows=4) }}<br>
+	            {% for error in form.post.errors %}
+	            <span style="color: red;">[{{ error }}]</span>
+	            {% endfor %}
+	        </p>
+	        <p>{{ form.submit() }}</p>
+	    </form>
+	    {% for post in posts %}
+	    <p>
+	    {{ post.author.username }} says: <b>{{ post.body }}</b>
+	    </p>
+	    {% endfor %}
+	{% endblock %}
+
+Y por ultimo crear una vista para la creación de posts.
+Ver: app/routes.py
+
+	from app.forms import PostForm
+	from app.models import Post
+
+	@app.route('/', methods=['GET', 'POST'])
+	@app.route('/index', methods=['GET', 'POST'])
+	@login_required
+	def index():
+	    form = PostForm()
+	    if form.validate_on_submit():
+	        post = Post(body=form.post.data, author=current_user)
+	        db.session.add(post)
+	        db.session.commit()
+	        flash('Your post is now live!')
+	        return redirect(url_for('index'))
+	    posts = [
+	        {
+	            'author': {'username': 'John'},
+	            'body': 'Beautiful day in Portland!'
+	        },
+	        {
+	            'author': {'username': 'Susan'},
+	            'body': 'The Avengers movie was so cool!'
+	        }
+	    ]
+	    return render_template("index.html", title='Home Page', form=form,
+	                           posts=posts)
+
+> Es un estándar usar **redirect** después de un POST ya que con esto se evita el tener información
+duplicada. Si la ultima vez se envió un formulario por POST y se recarga la página, el navegador
+va a reenviar el formulario y podría duplicarse la información. Esto es un patrón llamado 'Post/Redirect/Get'.
+
+### Displaying Blog Posts
+
+Ver: app/routes.py
+
+	@app.route('/', methods=['GET', 'POST'])
+	@app.route('/index', methods=['GET', 'POST'])
+	@login_required
+	def index():
+	    # ...
+	    posts = current_user.followed_posts().all()
+	    return render_template("index.html", title='Home Page', form=form,
+	                           posts=posts)
+
+### Making It Easier to Find Users to Follow
+
+Se va a crear una página "Explorar". Esta página funcionará como la página de inicio, pero en lugar
+de mostrar solo las publicaciones de los usuarios seguidos, mostrará una secuiencia de publicaciones
+globales de todos los usuarios.
+
+Ver: app.routes.explore
+
+Nótese que en la función *render_template()* se llama a 'index.html', esto porque se decidió utilizar
+esta plantilla, ya que esta página va a ser muy similar a la página principal. La única diferencia
+es que esta no va a tener el formulario para escribir nuevos posts.
+
+Para evitar que el template genere errores se colocó una condición para que se muestre el formulario
+solo si este se paga como parametro.
+
+Ver: app/templates/index.html
+
+	{% extends "base.html" %}
+
+	{% block content %}
+	    <h1>Hi, {{ current_user.username }}!</h1>
+	    {% if form %}
+	    <form action="" method="post">
+	        ...
+	    </form>
+	    {% endif %}
+	    ...
+	{% endblock %}
+
+### Pagination of Blog Posts
+
+Flask-SQLAlchemy permite la paginación de forma nativa en el método **paginate()**. Si por ejemplo,
+deseo obtener las primeras 20 publicaciones seguidas del usuario, se puede reemplazar _all()_ :
+
+	>>> user.followed_posts().paginate(1, 20, False).items
+
+El método paginate() se puede llamar desde cualquier objeto query de SQLAlchemy, y toma 3 argumentos:
+
+- El número de la página, empezando con 1.
+- El número de items por página.
+- Una bandera de error. Si es True, cuando se solicite una página fuera de rango, se devolverá
+automáticamente un error 404. Si es False, se devolverá una lista vacia para las páginas fuera de
+rango.
+
+El valor devuelto por paginate() es un objeto **Pagination**. El atributo **items** de este objeto
+contiene la lista de elementos en la página solicitada.
+
+Para implementar la paginación lo primero es configurar la variable **POST_PER_PAGE**, que determina
+cuantos objetos se mostraran por página.
+
+	class Config(object):
+	    # ...
+		POSTS_PER_PAGE = 3
+
+Después de esto es necesario decidir como se van a incorporar los números de la páginas en las URLs
+de la aplicación. La forma más común es colocar un query string como argumento especificando un número
+opcional de página, dejando por defecto 1 si este argumento no es pasado.
+
+Ejemplos de como se va a implementar:
+
+1. Page 1: implicit: http://localhost:5000/index
+2. Page 2: explicit: http://localhost:5000/index?page=1
+3. Page 3: http://localhost:5000/index?page=3
+
+Para acceder a los argumentos de las URL Flask usa el objeto **request.args**.
+
+Ver app/routes.py
+
+	@app.route('/', methods=['GET', 'POST'])
+	@app.route('/index', methods=['GET', 'POST'])
+	@login_required
+	def index():
+	    # ...
+	    page = request.args.get('page', 1, type=int)
+	    posts = current_user.followed_posts().paginate(
+	        page, app.config['POSTS_PER_PAGE'], False)
+	    return render_template('index.html', title='Home', form=form,
+	                           posts=posts.items)
+
+	@app.route('/explore')
+	@login_required
+	def explore():
+	    page = request.args.get('page', 1, type=int)
+	    posts = Post.query.order_by(Post.timestamp.desc()).paginate(
+	        page, app.config['POSTS_PER_PAGE'], False)
+	    return render_template("index.html", title='Explore', posts=posts.items)
+
+Con estos cambios, las dos vistas determinan el número de la página, puede ser del argumento **page**
+o por defecto 1, después se usa el método **paginate()** para resivir solo los resultados deseados
+para la página.
+
+> Tenga en cuenta lo fáciles que son estos cambios y lo poco que se ve afectado el código cada vez
+que se realiza un cambio. Estoy tratando de escribir cada parte de la aplicación sin hacer suposiciones
+sobre cómo funcionan las otras partes, y esto me permite escribir aplicaciones modulares y robustas que
+son más fáciles de ampliar y probar, y tienen menos probabilidades de fallar o tener errores.
+
+Ver: http://localhost:5000/explore?page=2
+
+### Page Navigation
+
+El siguiente cambio es añadir links al final del listado de posts que permitan la navegación
+a los usuarios.
+
+Anteriormente se mencionó que la función **paginate()** retornaba un objeto de la clase **Pagination**
+de Flask_SQLAlchemy, hasta el momento se ha usado el atributo 'items' que contiene el listado de
+items recibidos para la página solicitada. Pero el objeto **Pagination** tiene otros atributos
+que serán utiles para la navegación:
+
+- **has_next**: True si queda al menos una página despues de la actual.
+- **has_prev**: True si hay al menos una página antes de la actual.
+- **next_num**: El número de la siguiente página.
+- **prev_num**: El número de la página previa.
+
+Con estos cuatro elementos se va a generar la navegación de los posts:
+
+Ver: app/routes.py
+
+	@app.route('/', methods=['GET', 'POST'])
+	@app.route('/index', methods=['GET', 'POST'])
+	@login_required
+	def index():
+	    # ...
+	    page = request.args.get('page', 1, type=int)
+	    posts = current_user.followed_posts().paginate(
+	        page, app.config['POSTS_PER_PAGE'], False)
+	    next_url = url_for('index', page=posts.next_num) \
+	        if posts.has_next else None
+	    prev_url = url_for('index', page=posts.prev_num) \
+	        if posts.has_prev else None
+	    return render_template('index.html', title='Home', form=form,
+	                           posts=posts.items, next_url=next_url,
+	                           prev_url=prev_url)
+
+	@app.route('/explore')
+	@login_required
+	def explore():
+	    page = request.args.get('page', 1, type=int)
+	    posts = Post.query.order_by(Post.timestamp.desc()).paginate(
+	        page, app.config['POSTS_PER_PAGE'], False)
+	    next_url = url_for('explore', page=posts.next_num) \
+	        if posts.has_next else None
+	    prev_url = url_for('explore', page=posts.prev_num) \
+	        if posts.has_prev else None
+	    return render_template("index.html", title='Explore', posts=posts.items,
+	                          next_url=next_url, prev_url=prev_url)
+
+> Un aspecto interesante de **url_for()** es que se pueden añadir argumentos como diccionarios
+(keywords), y si los nombres de estos argumentos no están referenciados directamente en las URL,
+entonces Flask los incluirá directamente como query arguments.
+
+La paginación se implementará en el template: index.html
+
+

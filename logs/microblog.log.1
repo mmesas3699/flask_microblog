@@ -1,21 +1,10 @@
-2018-10-01 11:02:33,183 INFO: Micorblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:58]
-2018-10-02 10:21:49,675 INFO: Micorblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
-2018-10-02 10:22:23,953 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
-2018-10-02 10:22:36,118 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
-2018-10-02 10:23:37,692 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
-2018-10-02 10:25:02,713 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
-2018-10-02 10:27:27,204 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
-2018-10-02 10:29:35,897 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
-2018-10-02 10:29:40,409 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
-2018-10-02 10:30:09,084 ERROR: Exception on /login [POST] [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py:1761]
+2018-10-03 09:32:54,294 ERROR: Exception on /explore [GET] [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py:1761]
 Traceback (most recent call last):
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1193, in _execute_context
-    context)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/default.py", line 509, in do_execute
-    cursor.execute(statement, parameters)
-sqlite3.OperationalError: no such table: user
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/sql/elements.py", line 684, in __getattr__
+    return getattr(self.comparator, key)
+AttributeError: 'Comparator' object has no attribute 'all'
 
-The above exception was the direct cause of the following exception:
+During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
   File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 2292, in wsgi_app
@@ -30,32 +19,74 @@ Traceback (most recent call last):
     rv = self.dispatch_request()
   File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1799, in dispatch_request
     return self.view_functions[rule.endpoint](**req.view_args)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/routes.py", line 49, in login
-    user = User.query.filter_by(username=form.username.data).first()
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/orm/query.py", line 2888, in first
-    ret = list(self[0:1])
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/orm/query.py", line 2680, in __getitem__
-    return list(res)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/orm/query.py", line 2988, in __iter__
-    return self._execute_and_instances(context)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/orm/query.py", line 3011, in _execute_and_instances
-    result = conn.execute(querycontext.statement, self._params)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 948, in execute
-    return meth(self, multiparams, params)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/sql/elements.py", line 269, in _execute_on_connection
-    return connection._execute_clauseelement(self, multiparams, params)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1060, in _execute_clauseelement
-    compiled_sql, distilled_params
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1200, in _execute_context
-    context)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1413, in _handle_dbapi_exception
-    exc_info
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/util/compat.py", line 265, in raise_from_cause
-    reraise(type(exception), exception, tb=exc_tb, cause=cause)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/util/compat.py", line 248, in reraise
-    raise value.with_traceback(tb)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/base.py", line 1193, in _execute_context
-    context)
-  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/engine/default.py", line 509, in do_execute
-    cursor.execute(statement, parameters)
-sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: user [SQL: 'SELECT user.id AS user_id, user.username AS user_username, user.email AS user_email, user.password_hash AS user_password_hash, user.about_me AS user_about_me, user.last_seen AS user_last_seen \nFROM user \nWHERE user.username = ?\n LIMIT ? OFFSET ?'] [parameters: ('mmesas', 1, 0)] (Background on this error at: http://sqlalche.me/e/e3q8)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask_login/utils.py", line 261, in decorated_view
+    return func(*args, **kwargs)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/routes.py", line 154, in explore
+    posts = Post.query.order_by(Post.timestamp.desc().all())
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/sqlalchemy/sql/elements.py", line 690, in __getattr__
+    key)
+AttributeError: Neither 'UnaryExpression' object nor 'Comparator' object has an attribute 'all'
+2018-10-03 09:34:32,582 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-03 15:55:43,544 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-03 15:57:07,326 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-03 15:57:16,118 ERROR: Exception on / [GET] [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py:1761]
+Traceback (most recent call last):
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 2292, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1815, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1718, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/_compat.py", line 35, in reraise
+    raise value
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask_login/utils.py", line 261, in decorated_view
+    return func(*args, **kwargs)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/routes.py", line 40, in index
+    posts = current_user.followed_post().paginate(
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/werkzeug/local.py", line 347, in __getattr__
+    return getattr(self._get_current_object(), name)
+AttributeError: 'User' object has no attribute 'followed_post'
+2018-10-03 15:58:20,952 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-03 16:00:17,505 ERROR: Exception on /explore [GET] [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py:1761]
+Traceback (most recent call last):
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 2292, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1815, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1718, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/_compat.py", line 35, in reraise
+    raise value
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask_login/utils.py", line 261, in decorated_view
+    return func(*args, **kwargs)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/routes.py", line 159, in explore
+    page, app.config['POSTS_PER_PAGE'], False)
+KeyError: 'POSTS_PER_PAGE'
+2018-10-03 16:00:45,000 INFO: Microblog startup [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/__init__.py:57]
+2018-10-03 16:01:14,599 ERROR: Exception on /index [GET] [in /home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py:1761]
+Traceback (most recent call last):
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 2292, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1815, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1718, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/_compat.py", line 35, in reraise
+    raise value
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1813, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask/app.py", line 1799, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/venv/lib/python3.6/site-packages/flask_login/utils.py", line 261, in decorated_view
+    return func(*args, **kwargs)
+  File "/home/mmesas/Documentos/aprendiendo/programacion/flask_/microblog/app/routes.py", line 41, in index
+    page, app.config['POST_PER_PAGE'], False)
+KeyError: 'POST_PER_PAGE'
